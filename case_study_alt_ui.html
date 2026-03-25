@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UX Case Study — Insurance Quote Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:    #0a0a0f;
+  --ink2:   #111118;
+  --yellow: #f5e642;
+  --white:  #ffffff;
+  --chalk:  #f0ede6;
+  --muted:  rgba(255,255,255,.38);
+  --dim:    rgba(255,255,255,.12);
+  --red:    #ff4444;
+  --green:  #00c896;
+  --teal:   #00b4a0;
+  --blue:   #4d8eff;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--ink); color: var(--white);
+  overflow-x: hidden; cursor: none;
+}
+
+/* ── CURSOR ──────────────────────────── */
+.cursor {
+  position: fixed; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--yellow); pointer-events: none; z-index: 9999;
+  transform: translate(-50%,-50%); transition: transform .1s, width .2s, height .2s;
+  mix-blend-mode: difference;
+}
+.cursor-ring {
+  position: fixed; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid rgba(245,230,66,.4); pointer-events: none; z-index: 9998;
+  transform: translate(-50%,-50%); transition: transform .18s ease, width .25s, height .25s;
+}
+
+/* ── PROGRESS ────────────────────────── */
+#prog {
+  position: fixed; top: 0; left: 0; height: 2px; width: 0;
+  background: var(--yellow); z-index: 1000; transition: width .08s linear;
+}
+
+/* ── NAV ─────────────────────────────── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 48px; mix-blend-mode: difference;
+}
+.n-logo {
+  font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .1em;
+  color: var(--white); text-decoration: none;
+}
+.n-tag {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .12em;
+  color: var(--white); opacity: .5; text-transform: uppercase;
+}
+
+/* ── HERO ─────────────────────────────── */
+#hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  justify-content: flex-end; padding: 0 48px 64px;
+  position: relative; overflow: hidden; background: var(--ink);
+}
+.hero-num {
+  position: absolute; right: -40px; top: 50%; transform: translateY(-60%);
+  font-family: 'Bebas Neue', sans-serif; font-size: clamp(280px, 35vw, 480px);
+  color: rgba(255,255,255,.022); line-height: 1; pointer-events: none; user-select: none;
+  letter-spacing: -.02em;
+}
+.hero-eyebrow {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .14em;
+  color: var(--yellow); text-transform: uppercase; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::before { content: ''; width: 32px; height: 1px; background: var(--yellow); }
+.hero-h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(72px, 12vw, 160px); line-height: .92; letter-spacing: .01em;
+  color: var(--white); margin-bottom: 40px;
+}
+.hero-h1 span { color: var(--yellow); }
+.hero-bottom {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 40px;
+}
+.hero-desc {
+  font-size: 16px; color: var(--muted); max-width: 420px; line-height: 1.7;
+}
+.hero-stats { display: flex; gap: 0; border: 1px solid var(--dim); }
+.hs {
+  padding: 20px 32px; border-right: 1px solid var(--dim); text-align: center;
+}
+.hs:last-child { border-right: none; }
+.hs-val { font-family: 'Bebas Neue', sans-serif; font-size: 40px; line-height: 1; }
+.hs-val.y  { color: var(--yellow); }
+.hs-val.g  { color: var(--green); }
+.hs-val.r  { color: var(--red); }
+.hs-lbl { font-size: 10px; letter-spacing: .08em; color: var(--muted); margin-top: 4px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+.hero-scroll {
+  position: absolute; bottom: 28px; right: 48px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .1em;
+  color: var(--muted); writing-mode: vertical-rl; display: flex; align-items: center; gap: 10px;
+}
+.hero-scroll::after { content: ''; width: 1px; height: 48px; background: rgba(255,255,255,.15); }
+
+/* ── SECTION BASE ────────────────────── */
+.s { padding: 120px 48px; position: relative; }
+.s-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .15em;
+  color: var(--yellow); text-transform: uppercase; margin-bottom: 16px; display: block;
+}
+.s-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 8vw, 108px);
+  line-height: .9; letter-spacing: .02em; margin-bottom: 0;
+}
+.s-lead {
+  font-size: 16px; color: var(--muted); line-height: 1.75; max-width: 520px;
+  margin-top: 24px;
+}
+
+/* Reveal */
+.r { opacity: 0; transform: translateY(36px); transition: opacity .7s ease, transform .7s ease; }
+.r.on { opacity: 1; transform: none; }
+.rd1 { transition-delay: .1s; }
+.rd2 { transition-delay: .2s; }
+.rd3 { transition-delay: .3s; }
+.rd4 { transition-delay: .4s; }
+.rd5 { transition-delay: .5s; }
+
+/* ── PROBLEM SECTION ─────────────────── */
+#problem { background: var(--ink2); overflow: hidden; }
+.problem-inner {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0; max-width: 1300px; margin: 0 auto;
+  align-items: stretch;
+}
+.problem-left { padding-right: 80px; padding-top: 20px; }
+.problem-right {
+  border-left: 1px solid var(--dim); padding-left: 80px; padding-top: 20px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.big-quote {
+  font-family: 'Bebas Neue', sans-serif; font-size: clamp(32px, 4vw, 54px);
+  line-height: 1.05; color: var(--yellow); margin-bottom: 32px;
+}
+.impact-list { display: flex; flex-direction: column; gap: 16px; }
+.impact-row {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 20px; border: 1px solid var(--dim); border-radius: 2px;
+  transition: border-color .2s, background .2s;
+}
+.impact-row:hover { border-color: var(--yellow); background: rgba(245,230,66,.03); }
+.impact-icon {
+  width: 36px; height: 36px; flex-shrink: 0; border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500; color: var(--ink);
+}
+.impact-icon.r { background: var(--red); }
+.impact-icon.a { background: #f59e0b; }
+.impact-icon.p { background: #8b5cf6; }
+.impact-label { font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+.impact-desc  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* ── AUDIT ───────────────────────────── */
+#audit { background: var(--chalk); color: var(--ink); }
+#audit .s-num { color: var(--ink); opacity: .4; }
+#audit .s-title { color: var(--ink); }
+#audit .s-lead { color: rgba(10,10,15,.5); }
+.audit-strip { display: flex; flex-direction: column; gap: 0; max-width: 1300px; margin: 52px auto 0; }
+.a-row {
+  display: grid; grid-template-columns: 80px 1fr 1fr; gap: 0; align-items: center;
+  border-bottom: 1px solid rgba(10,10,15,.08); padding: 24px 0;
+  transition: background .2s;
+}
+.a-row:first-child { border-top: 1px solid rgba(10,10,15,.08); }
+.a-row:hover { background: rgba(10,10,15,.03); }
+.a-n {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(10,10,15,.3);
+  letter-spacing: .1em; padding-right: 20px;
+}
+.a-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+.a-desc  { font-size: 13px; color: rgba(10,10,15,.5); padding-left: 40px; border-left: 1px solid rgba(10,10,15,.1); margin-left: 20px; }
+.severity {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 8px; vertical-align: middle;
+}
+
+/* ── INSIGHT ─────────────────────────── */
+#insight { background: var(--ink); }
+.insight-banner {
+  max-width: 1300px; margin: 0 auto 64px;
+  border: 1px solid rgba(245,230,66,.2); padding: 48px 52px;
+  position: relative;
+}
+.insight-banner::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--yellow);
+}
+.ib-text {
+  font-family: 'Bebas Neue', sans-serif; font-size: clamp(28px, 3.5vw, 48px);
+  line-height: 1.1; color: var(--white);
+}
+.ib-text em { color: var(--yellow); font-style: normal; }
+.behavior-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px; max-width: 1300px; margin: 0 auto;
+}
+.beh-card {
+  background: rgba(255,255,255,.025); padding: 40px 44px;
+  border: 1px solid var(--dim); transition: border-color .2s, background .2s;
+  position: relative; overflow: hidden;
+}
+.beh-card:hover { border-color: rgba(245,230,66,.2); background: rgba(245,230,66,.02); }
+.beh-card::after {
+  content: attr(data-n);
+  position: absolute; right: 24px; bottom: 8px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 80px; color: rgba(255,255,255,.025);
+  line-height: 1; pointer-events: none;
+}
+.bc-n { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--yellow); letter-spacing: .12em; margin-bottom: 16px; display: block; }
+.bc-title { font-size: 22px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
+.bc-body  { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+/* ── SOLUTION ────────────────────────── */
+#solution { background: var(--ink2); }
+.flow-steps {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+  max-width: 1300px; margin: 60px auto 0;
+  border: 1px solid var(--dim);
+}
+.fs {
+  padding: 44px 36px; border-right: 1px solid var(--dim);
+  position: relative; overflow: hidden;
+  transition: background .25s;
+}
+.fs:last-child { border-right: none; }
+.fs:hover { background: rgba(255,255,255,.025); }
+.fs-step {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .12em;
+  color: var(--yellow); margin-bottom: 20px; text-transform: uppercase;
+}
+.fs-num {
+  font-family: 'Bebas Neue', sans-serif; font-size: 88px; line-height: .85;
+  margin-bottom: 24px;
+}
+.fs-title { font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 6px; }
+.fs-sub   { font-size: 12px; color: var(--muted); font-style: italic; margin-bottom: 24px; }
+.fs-items { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.fs-items li {
+  font-size: 13px; color: var(--muted); padding-left: 16px; position: relative; line-height: 1.4;
+}
+.fs-items li::before { content: '—'; position: absolute; left: 0; color: var(--dim); }
+.fs-cta {
+  display: inline-block; margin-top: 28px; padding: 8px 20px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+  letter-spacing: .06em; border-radius: 2px;
+}
+.fs-bg {
+  position: absolute; bottom: -20px; right: -20px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 120px; opacity: .04; line-height: 1;
+  pointer-events: none; color: var(--white);
+}
+
+/* ── BEFORE / AFTER ──────────────────── */
+#compare { background: var(--ink); }
+.compare-inner { max-width: 1300px; margin: 60px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.compare-col { padding: 0; }
+.compare-col:first-child { border-right: 1px solid var(--dim); padding-right: 52px; }
+.compare-col:last-child  { padding-left: 52px; }
+.c-head {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; padding-bottom: 20px;
+  border-bottom: 1px solid var(--dim); margin-bottom: 0;
+}
+.c-head.bad  { color: var(--red); }
+.c-head.good { color: var(--green); }
+.c-item {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 22px 0; border-bottom: 1px solid var(--dim); font-size: 15px;
+}
+.c-item:last-child { border-bottom: none; }
+.c-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.c-text { color: rgba(255,255,255,.7); line-height: 1.5; }
+.c-text strong { color: var(--white); font-weight: 600; display: block; margin-bottom: 2px; }
+
+/* ── TRUST ───────────────────────────── */
+#trust { background: var(--chalk); color: var(--ink); }
+#trust .s-num   { color: var(--ink); opacity: .4; }
+#trust .s-title { color: var(--ink); }
+.trust-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+  max-width: 1300px; margin: 60px auto 0;
+  border: 1px solid rgba(10,10,15,.1);
+}
+.t-cell {
+  padding: 40px 36px; border-right: 1px solid rgba(10,10,15,.1);
+  transition: background .2s;
+}
+.t-cell:nth-child(3), .t-cell:nth-child(6) { border-right: none; }
+.t-cell:nth-child(4), .t-cell:nth-child(5), .t-cell:nth-child(6) { border-top: 1px solid rgba(10,10,15,.1); }
+.t-cell:hover { background: rgba(10,10,15,.03); }
+.t-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .1em;
+  color: #fff; padding: 4px 10px; border-radius: 2px; display: inline-block; margin-bottom: 20px;
+  background: var(--ink);
+}
+.t-title { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.t-body  { font-size: 13px; color: rgba(10,10,15,.5); line-height: 1.65; }
+
+/* ── IMPACT ──────────────────────────── */
+#impact { background: var(--ink2); overflow: hidden; }
+.impact-inner { max-width: 1300px; margin: 0 auto; }
+.metrics-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+  border: 1px solid var(--dim); margin-bottom: 0;
+}
+.m-cell {
+  padding: 52px 40px; border-right: 1px solid var(--dim); text-align: center;
+  transition: background .2s;
+}
+.m-cell:last-child { border-right: none; }
+.m-cell:hover { background: rgba(255,255,255,.02); }
+.m-arrow { font-family: 'Bebas Neue', sans-serif; font-size: 80px; line-height: .9; margin-bottom: 12px; }
+.m-arrow.g { color: var(--green); }
+.m-arrow.r { color: var(--red); }
+.m-label { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.m-sub   { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+/* ── CLOSING ─────────────────────────── */
+#closing {
+  min-height: 92vh; display: flex; align-items: center;
+  padding: 120px 48px; background: var(--ink); position: relative; overflow: hidden;
+}
+.cl-bg-text {
+  position: absolute; bottom: -60px; right: -40px;
+  font-family: 'Bebas Neue', sans-serif; font-size: clamp(140px, 22vw, 320px);
+  color: rgba(255,255,255,.018); line-height: 1; pointer-events: none; user-select: none;
+  white-space: nowrap; letter-spacing: -.02em;
+}
+.cl-inner { position: relative; z-index: 1; max-width: 1000px; }
+.cl-kicker {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .14em;
+  color: var(--yellow); text-transform: uppercase; margin-bottom: 28px;
+  display: flex; align-items: center; gap: 14px;
+}
+.cl-kicker::before { content: ''; width: 40px; height: 1px; background: var(--yellow); }
+.cl-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(56px, 10vw, 130px); line-height: .9; margin-bottom: 32px;
+}
+.cl-title em { color: var(--yellow); font-style: normal; }
+.cl-sub { font-size: 16px; color: var(--muted); line-height: 1.7; max-width: 540px; margin-bottom: 52px; }
+.cl-tags { display: flex; gap: 10px; flex-wrap: wrap; }
+.cl-tag {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .08em;
+  padding: 8px 18px; border: 1px solid var(--dim); color: var(--muted); border-radius: 2px;
+  text-transform: uppercase; transition: border-color .2s, color .2s;
+}
+.cl-tag:hover { border-color: var(--yellow); color: var(--yellow); }
+
+/* ── FOOTER ──────────────────────────── */
+footer {
+  background: #06060a; padding: 24px 48px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid rgba(255,255,255,.04);
+}
+.f-txt { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(255,255,255,.15); letter-spacing: .06em; }
+
+/* ── RESPONSIVE ──────────────────────── */
+@media (max-width: 860px) {
+  nav { padding: 16px 20px; }
+  .s  { padding: 80px 20px; }
+  #hero { padding: 0 20px 52px; }
+  .hero-bottom { flex-direction: column; gap: 28px; align-items: flex-start; }
+  .problem-inner { grid-template-columns: 1fr; }
+  .problem-right { border-left: none; border-top: 1px solid var(--dim); padding-left: 0; padding-top: 40px; margin-top: 40px; }
+  .problem-left  { padding-right: 0; }
+  .behavior-grid { grid-template-columns: 1fr; }
+  .flow-steps    { grid-template-columns: 1fr 1fr; }
+  .compare-inner { grid-template-columns: 1fr; gap: 48px; }
+  .compare-col:first-child { border-right: none; border-bottom: 1px solid var(--dim); padding-right: 0; padding-bottom: 48px; }
+  .compare-col:last-child  { padding-left: 0; }
+  .trust-row    { grid-template-columns: 1fr; }
+  .t-cell       { border-right: none; }
+  .metrics-row  { grid-template-columns: 1fr 1fr; }
+  .a-row        { grid-template-columns: 60px 1fr; }
+  .a-desc       { display: none; }
+  footer        { flex-direction: column; gap: 6px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="ring"></div>
+<div id="prog"></div>
+
+<nav>
+  <a class="n-logo" href="#">UX·CASE</a>
+  <div class="n-tag">Life Insurance · Quote Redesign</div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section id="hero">
+  <div class="hero-num">UX</div>
+  <div class="hero-eyebrow">Case Study · 2024</div>
+  <h1 class="hero-h1">Life Insurance<br><span>Quote</span><br>Redesign</h1>
+  <div class="hero-bottom">
+    <p class="hero-desc">Increasing form completion by restructuring <em>when</em> data is collected — not <em>what</em> is collected. One structural shift. Multiple business outcomes.</p>
+    <div class="hero-stats">
+      <div class="hs"><div class="hs-val r">↓</div><div class="hs-lbl">Drop-off</div></div>
+      <div class="hs"><div class="hs-val g">↑</div><div class="hs-lbl">Completion</div></div>
+      <div class="hs"><div class="hs-val g">↑</div><div class="hs-lbl">Trust</div></div>
+      <div class="hs"><div class="hs-val y">4</div><div class="hs-lbl">Steps</div></div>
+    </div>
+  </div>
+  <div class="hero-scroll">SCROLL</div>
+</section>
+
+<!-- ══ PROBLEM ══ -->
+<section id="problem" class="s">
+  <div class="problem-inner">
+    <div class="problem-left">
+      <span class="s-num r">01 — Problem</span>
+      <h2 class="s-title r rd1">The Form<br>Asks Too<br>Much,<br>Too Soon.</h2>
+      <p class="s-lead r rd2">Users arrive with intent. The form loses them before they see a single number. Not a product failure — a sequencing failure.</p>
+    </div>
+    <div class="problem-right">
+      <div class="big-quote r rd1">"The form asks for everything before giving anything."</div>
+      <div class="impact-list">
+        <div class="impact-row r rd2">
+          <div class="impact-icon r">REV</div>
+          <div><div class="impact-label">Lost Revenue</div><div class="impact-desc">Every abandoned form is a lost conversion. High-intent users are already here.</div></div>
+        </div>
+        <div class="impact-row r rd3">
+          <div class="impact-icon a">UX</div>
+          <div><div class="impact-label">Fixable Drop-off</div><div class="impact-desc">Motivation exists — friction is winning. That's a design problem, not a product one.</div></div>
+        </div>
+        <div class="impact-row r rd4">
+          <div class="impact-icon p">TRU</div>
+          <div><div class="impact-label">Trust-Sensitive Domain</div><div class="impact-desc">Finance + personal data — users are cautious by default. Every unnecessary field amplifies anxiety.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ AUDIT ══ -->
+<section id="audit" class="s">
+  <span class="s-num r">02 — Audit</span>
+  <h2 class="s-title r rd1">6 Issues.<br>One Root Cause.</h2>
+  <p class="s-lead r rd2">Every issue traces back to the same structural problem: asking before giving.</p>
+  <div class="audit-strip">
+    <div class="a-row r rd1">
+      <div class="a-n">01</div>
+      <div class="a-title"><span class="severity" style="background:#ff4444"></span>Too many fields upfront</div>
+      <div class="a-desc">All 9 fields shown at once — overwhelming first impression, no progressive structure.</div>
+    </div>
+    <div class="a-row r rd2">
+      <div class="a-n">02</div>
+      <div class="a-title"><span class="severity" style="background:#f59e0b"></span>No visible progress</div>
+      <div class="a-desc">No step bar or indicator — users don't know how much effort remains before they quit.</div>
+    </div>
+    <div class="a-row r rd1">
+      <div class="a-n">03</div>
+      <div class="a-title"><span class="severity" style="background:#ff4444"></span>Personal data too early</div>
+      <div class="a-desc">Mobile + email required before any value is shown. The #1 trust barrier at form entry.</div>
+    </div>
+    <div class="a-row r rd2">
+      <div class="a-n">04</div>
+      <div class="a-title"><span class="severity" style="background:#f59e0b"></span>Poor field grouping</div>
+      <div class="a-desc">Nominee, language, and contact share the same visual zone — high cognitive load, no clear flow.</div>
+    </div>
+    <div class="a-row r rd1">
+      <div class="a-n">05</div>
+      <div class="a-title"><span class="severity" style="background:#8b5cf6"></span>Weak CTA copy</div>
+      <div class="a-desc">"Calculate returns" — vague, disconnected, tells users nothing about what comes next.</div>
+    </div>
+    <div class="a-row r rd2">
+      <div class="a-n">06</div>
+      <div class="a-title"><span class="severity" style="background:#8b5cf6"></span>Distracting elements</div>
+      <div class="a-desc">6 product tabs + promotional content compete with the form for attention mid-task.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ INSIGHT ══ -->
+<section id="insight" class="s">
+  <span class="s-num r">03 — User Insight</span>
+  <h2 class="s-title r rd1">How Users<br>Behave in<br>Financial Flows.</h2>
+  <div class="insight-banner r rd2">
+    <div class="ib-text">Users scan before committing. They avoid sharing data early. They need <em>instant value</em> to continue — and drop off when effort exceeds perceived benefit.</div>
+  </div>
+  <div class="behavior-grid">
+    <div class="beh-card r rd1" data-n="01">
+      <span class="bc-n">01 — Behaviour</span>
+      <div class="bc-title">Scan before committing</div>
+      <div class="bc-body">They skim the entire form before filling anything. The first impression decides whether they invest effort at all. A wall of 9 fields signals "this will be hard."</div>
+    </div>
+    <div class="beh-card r rd2" data-n="02">
+      <span class="bc-n">02 — Behaviour</span>
+      <div class="bc-title">Avoid early data sharing</div>
+      <div class="bc-body">Sharing a phone number before seeing value feels like a trap. It signals the company's interest over theirs — and triggers immediate suspicion.</div>
+    </div>
+    <div class="beh-card r rd3" data-n="03">
+      <span class="bc-n">03 — Behaviour</span>
+      <div class="bc-title">Need instant value</div>
+      <div class="bc-body">If they don't see a tangible benefit within Step 1, they leave. No quote = no reason to stay. Value must come before the ask.</div>
+    </div>
+    <div class="beh-card r rd4" data-n="04">
+      <span class="bc-n">04 — Behaviour</span>
+      <div class="bc-title">Drop off when effort &gt; benefit</div>
+      <div class="bc-body">The mental cost of completing the form must stay below the perceived reward. The moment it flips — users exit. The redesign tips this balance back.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SOLUTION ══ -->
+<section id="solution" class="s">
+  <span class="s-num r">04 — Solution</span>
+  <h2 class="s-title r rd1">Give Value.<br>Then Ask.</h2>
+  <p class="s-lead r rd2">Four steps. One structural principle: show the premium before requesting contact details.</p>
+  <div class="flow-steps">
+    <div class="fs r rd1">
+      <div class="fs-step">Step 01</div>
+      <div class="fs-num" style="color:var(--yellow)">01</div>
+      <div class="fs-title">Quick Estimate</div>
+      <div class="fs-sub">Low commitment</div>
+      <ul class="fs-items">
+        <li>Date of Birth</li>
+        <li>Gender</li>
+        <li>Smoking status</li>
+      </ul>
+      <span class="fs-cta" style="background:var(--yellow);color:var(--ink)">See my premium →</span>
+      <div class="fs-bg">1</div>
+    </div>
+    <div class="fs r rd2">
+      <div class="fs-step">Step 02</div>
+      <div class="fs-num" style="color:var(--teal)">02</div>
+      <div class="fs-title">Value Reveal</div>
+      <div class="fs-sub">The moment</div>
+      <ul class="fs-items">
+        <li>Premium shown</li>
+        <li>Emotional engagement</li>
+        <li>User is now invested</li>
+      </ul>
+      <span class="fs-cta" style="border:1px solid rgba(0,180,160,.3);color:var(--teal)">Give before you ask</span>
+      <div class="fs-bg">2</div>
+    </div>
+    <div class="fs r rd3">
+      <div class="fs-step">Step 03</div>
+      <div class="fs-num" style="color:var(--blue)">03</div>
+      <div class="fs-title">Personal Details</div>
+      <div class="fs-sub">After value</div>
+      <ul class="fs-items">
+        <li>Name</li>
+        <li>Mobile + Email</li>
+        <li>NRI status</li>
+      </ul>
+      <span class="fs-cta" style="background:var(--blue);color:#fff">View Plans →</span>
+      <div class="fs-bg">3</div>
+    </div>
+    <div class="fs r rd4">
+      <div class="fs-step">Step 04</div>
+      <div class="fs-num" style="color:var(--green)">04</div>
+      <div class="fs-title">Optional Inputs</div>
+      <div class="fs-sub">Skippable</div>
+      <ul class="fs-items">
+        <li>Nominee details</li>
+        <li>Language preference</li>
+      </ul>
+      <span class="fs-cta" style="border:1px solid rgba(0,200,150,.3);color:var(--green)">Clearly optional</span>
+      <div class="fs-bg">4</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ BEFORE / AFTER ══ -->
+<section id="compare" class="s">
+  <span class="s-num r">05 — Before vs After</span>
+  <h2 class="s-title r rd1">Same Form.<br>Different Order.</h2>
+  <p class="s-lead r rd2">Not a single field was removed from the data model. The redesign only changed when each piece is asked.</p>
+  <div class="compare-inner">
+    <div class="compare-col r rd1">
+      <div class="c-head bad">✕ &nbsp;Before — High Friction</div>
+      <div class="c-item"><span class="c-icon" style="color:var(--red)">✕</span><div class="c-text"><strong>9 fields on one screen</strong>Overwhelming first impression, no structure or sequence.</div></div>
+      <div class="c-item"><span class="c-icon" style="color:var(--red)">✕</span><div class="c-text"><strong>Contact details first</strong>Mobile + email asked before any value is demonstrated.</div></div>
+      <div class="c-item"><span class="c-icon" style="color:var(--red)">✕</span><div class="c-text"><strong>Ambiguous toggles</strong>Yes/No switches don't clearly show which state is active.</div></div>
+      <div class="c-item"><span class="c-icon" style="color:var(--red)">✕</span><div class="c-text"><strong>No progress indicator</strong>Users can't see how far they've come or how much remains.</div></div>
+      <div class="c-item"><span class="c-icon" style="color:var(--red)">✕</span><div class="c-text"><strong>Vague CTA</strong>"Calculate returns" — no outcome, no motivation to click.</div></div>
+      <div class="c-item"><span class="c-icon" style="color:var(--red)">✕</span><div class="c-text"><strong>Nominee in step 1</strong>Emotionally heavy decision asked too early in the journey.</div></div>
+    </div>
+    <div class="compare-col r rd2">
+      <div class="c-head good">✓ &nbsp;After — Reduced Friction</div>
+      <div class="c-item"><span class="c-icon" style="color:var(--green)">✓</span><div class="c-text"><strong>3 steps, 3 fields each</strong>Focused, digestible steps with clear purpose per stage.</div></div>
+      <div class="c-item"><span class="c-icon" style="color:var(--green)">✓</span><div class="c-text"><strong>Contact after quote</strong>Phone + email only after premium is shown — users want to save it.</div></div>
+      <div class="c-item"><span class="c-icon" style="color:var(--green)">✓</span><div class="c-text"><strong>Clear chip selectors</strong>Both options always visible, tap-friendly, unambiguous state.</div></div>
+      <div class="c-item"><span class="c-icon" style="color:var(--green)">✓</span><div class="c-text"><strong>Step bar + live progress</strong>Always-visible indicator — reduces uncertainty and drop-off.</div></div>
+      <div class="c-item"><span class="c-icon" style="color:var(--green)">✓</span><div class="c-text"><strong>Outcome-oriented CTA</strong>"See my estimated premium" — clear outcome, clear motivation.</div></div>
+      <div class="c-item"><span class="c-icon" style="color:var(--green)">✓</span><div class="c-text"><strong>Nominee optional, step 3</strong>Explicitly optional, moveable post-purchase — no forced decision.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TRUST ══ -->
+<section id="trust" class="s">
+  <span class="s-num r">06 — Trust Design</span>
+  <h2 class="s-title r rd1">Trust Is a<br>Design Decision.</h2>
+  <p class="s-lead r rd2" style="color:rgba(10,10,15,.5)">Six targeted enhancements — each one addresses a specific anxiety point in the user journey.</p>
+  <div class="trust-row">
+    <div class="t-cell r rd1">
+      <span class="t-badge">SECURITY</span>
+      <div class="t-title">"Your data is secure"</div>
+      <div class="t-body">Placed next to fields that trigger the most anxiety — not buried in a footer. Visible on every step.</div>
+    </div>
+    <div class="t-cell r rd2">
+      <span class="t-badge">CONTEXT</span>
+      <div class="t-title">Microcopy explains why</div>
+      <div class="t-body">Each field has a short hint: "Used to check eligibility." Reduces suspicion and improves data accuracy.</div>
+    </div>
+    <div class="t-cell r rd3">
+      <span class="t-badge">SEQUENCE</span>
+      <div class="t-title">Contact after value</div>
+      <div class="t-body">Contact details only after the premium estimate is shown. Sharing feels logical — not intrusive.</div>
+    </div>
+    <div class="t-cell r rd1">
+      <span class="t-badge">FOCUS</span>
+      <div class="t-title">Noise removed</div>
+      <div class="t-body">Product tabs and promotional banners stripped from the form view. Nothing competes with the task.</div>
+    </div>
+    <div class="t-cell r rd2">
+      <span class="t-badge">OPTIONAL</span>
+      <div class="t-title">Nominee is optional</div>
+      <div class="t-body">Explicitly optional. Can be added post-purchase. Removes a heavy decision from an early stage.</div>
+    </div>
+    <div class="t-cell r rd3">
+      <span class="t-badge">MINIMAL</span>
+      <div class="t-title">Calm, focused UI</div>
+      <div class="t-body">One question at a time. Soft shadows, no heavy borders. Visual restraint = financial confidence.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ IMPACT ══ -->
+<section id="impact" class="s">
+  <span class="s-num r">07 — Impact</span>
+  <h2 class="s-title r rd1">One Shift.<br>Four Outcomes.</h2>
+  <p class="s-lead r rd2">Restructuring the sequence — not the visual design — moves all four key metrics.</p>
+  <div class="impact-inner" style="margin-top:60px">
+    <div class="metrics-row">
+      <div class="m-cell r rd1">
+        <div class="m-arrow r">↓</div>
+        <div class="m-label">Drop-off Rate</div>
+        <div class="m-sub">Fewer exits on the first screen</div>
+      </div>
+      <div class="m-cell r rd2">
+        <div class="m-arrow g">↑</div>
+        <div class="m-label">Completion Rate</div>
+        <div class="m-sub">More users reach the quote</div>
+      </div>
+      <div class="m-cell r rd3">
+        <div class="m-arrow g">↑</div>
+        <div class="m-label">User Trust</div>
+        <div class="m-sub">Data shared willingly, not coerced</div>
+      </div>
+      <div class="m-cell r rd4">
+        <div class="m-arrow g">↑</div>
+        <div class="m-label">Plan Conversion</div>
+        <div class="m-sub">Users motivated to explore plans</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CLOSING ══ -->
+<section id="closing">
+  <div class="cl-bg-text">REDESIGN</div>
+  <div class="cl-inner">
+    <div class="cl-kicker">Reflection</div>
+    <h2 class="cl-title">The Form Doesn't<br>Change What<br>It Collects.<br><em>Only When It Asks.</em></h2>
+    <p class="cl-sub">That single structural shift improves trust, reduces friction, and drives completion — without redesigning a single pixel. This is decision architecture, not decoration.</p>
+    <div class="cl-tags">
+      <span class="cl-tag">Progressive Disclosure</span>
+      <span class="cl-tag">Value First</span>
+      <span class="cl-tag">Trust by Design</span>
+      <span class="cl-tag">Decision Architecture</span>
+      <span class="cl-tag">Conversion Optimisation</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="f-txt">Life Insurance Quote Experience Redesign — UX Case Study · 2024</span>
+  <span class="f-txt">UX / Product Design</span>
+</footer>
+
+<script>
+// Custom cursor
+const cur = document.getElementById('cur'), ring = document.getElementById('ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+(function loop() {
+  rx += (mx - rx) * .15; ry += (my - ry) * .15;
+  cur.style.left = mx + 'px'; cur.style.top = my + 'px';
+  ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+  requestAnimationFrame(loop);
+})();
+
+// Progress bar
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+  document.getElementById('prog').style.width = pct + '%';
+});
+
+// Scroll reveal
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); obs.unobserve(e.target); } });
+}, { threshold: 0.08, rootMargin: '0px 0px -32px 0px' });
+document.querySelectorAll('.r').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
